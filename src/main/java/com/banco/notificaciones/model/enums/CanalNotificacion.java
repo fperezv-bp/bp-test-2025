@@ -6,10 +6,9 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum CanalNotificacion {
-    EMAIL("Email", 0.10),
-    SMS("SMS", 0.50),
-    PUSH("Push Notification", 0.05);
+    EMAIL("Email"),
+    SMS("SMS"),
+    PUSH("Push Notification");
     
     private final String descripcion;
-    private final double costo;
 }
