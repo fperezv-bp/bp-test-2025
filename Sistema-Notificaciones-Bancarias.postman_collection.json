@@ -1,0 +1,626 @@
+{
+	"info": {
+		"_postman_id": "abc12345-6789-0def-ghij-klmnopqrstuv",
+		"name": "Sistema de Notificaciones Bancarias",
+		"description": "Colección completa para probar el sistema de notificaciones bancarias con múltiples canales (Email, SMS, Push)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "12345678"
+	},
+	"item": [
+		{
+			"name": "1. Health Check",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/api/notificaciones/health",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"notificaciones",
+						"health"
+					]
+				},
+				"description": "Verifica que el servicio esté activo y funcionando correctamente."
+			},
+			"response": []
+		},
+		{
+			"name": "2. Crear Notificación - EMAIL",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"// Guardar el ID de la notificación para usarlo en otras requests",
+							"if (pm.response.code === 201) {",
+							"    var jsonData = pm.response.json();",
+							"    pm.environment.set(\"notificacion_id\", jsonData.id);",
+							"    pm.environment.set(\"email_notif_id\", jsonData.id);",
+							"    ",
+							"    // Tests",
+							"    pm.test(\"Status code is 201\", function () {",
+							"        pm.response.to.have.status(201);",
+							"    });",
+							"    ",
+							"    pm.test(\"Response has ID\", function () {",
+							"        pm.expect(jsonData.id).to.not.be.null;",
+							"    });",
+							"    ",
+							"    pm.test(\"Estado inicial es PENDIENTE\", function () {",
+							"        pm.expect(jsonData.estado).to.eql(\"PENDIENTE\");",
+							"    });",
+							"    ",
+							"    pm.test(\"Costo de EMAIL es 0.10\", function () {",
+							"        pm.expect(jsonData.costo).to.eql(0.10);",
+							"    });",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"destinatario\": \"cliente@banco.com\",\n  \"mensaje\": \"Su estado de cuenta de diciembre está disponible para consulta\",\n  \"canal\": \"EMAIL\",\n  \"prioridad\": \"MEDIA\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/notificaciones",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"notificaciones"
+					]
+				},
+				"description": "Crea una notificación por email. El destinatario debe contener '@' para ser válido. Costo: $0.10"
+			},
+			"response": []
+		},
+		{
+			"name": "3. Crear Notificación - SMS",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"if (pm.response.code === 201) {",
+							"    var jsonData = pm.response.json();",
+							"    pm.environment.set(\"sms_notif_id\", jsonData.id);",
+							"    ",
+							"    pm.test(\"Status code is 201\", function () {",
+							"        pm.response.to.have.status(201);",
+							"    });",
+							"    ",
+							"    pm.test(\"Costo de SMS es 0.50\", function () {",
+							"        pm.expect(jsonData.costo).to.eql(0.50);",
+							"    });",
+							"    ",
+							"    pm.test(\"Canal es SMS\", function () {",
+							"        pm.expect(jsonData.canal).to.eql(\"SMS\");",
+							"    });",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"destinatario\": \"5512345678\",\n  \"mensaje\": \"Código de verificación: 789456. Válido por 5 minutos.\",\n  \"canal\": \"SMS\",\n  \"prioridad\": \"ALTA\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/notificaciones",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"notificaciones"
+					]
+				},
+				"description": "Crea una notificación por SMS. El destinatario debe tener exactamente 10 dígitos numéricos. Costo: $0.50"
+			},
+			"response": []
+		},
+		{
+			"name": "4. Crear Notificación - PUSH",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"if (pm.response.code === 201) {",
+							"    var jsonData = pm.response.json();",
+							"    pm.environment.set(\"push_notif_id\", jsonData.id);",
+							"    ",
+							"    pm.test(\"Status code is 201\", function () {",
+							"        pm.response.to.have.status(201);",
+							"    });",
+							"    ",
+							"    pm.test(\"Costo de PUSH es 0.05\", function () {",
+							"        pm.expect(jsonData.costo).to.eql(0.05);",
+							"    });",
+							"    ",
+							"    pm.test(\"Canal es PUSH\", function () {",
+							"        pm.expect(jsonData.canal).to.eql(\"PUSH\");",
+							"    });",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"destinatario\": \"device_abc123xyz\",\n  \"mensaje\": \"¡Tienes una promoción especial! 20% de descuento en transferencias internacionales.\",\n  \"canal\": \"PUSH\",\n  \"prioridad\": \"BAJA\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/notificaciones",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"notificaciones"
+					]
+				},
+				"description": "Crea una notificación Push. El destinatario debe iniciar con 'device_'. Costo: $0.05"
+			},
+			"response": []
+		},
+		{
+			"name": "5. Enviar Notificación por ID",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"if (pm.response.code === 200) {",
+							"    var jsonData = pm.response.json();",
+							"    ",
+							"    pm.test(\"Status code is 200\", function () {",
+							"        pm.response.to.have.status(200);",
+							"    });",
+							"    ",
+							"    pm.test(\"Envío fue exitoso\", function () {",
+							"        pm.expect(jsonData.exitoso).to.be.true;",
+							"    });",
+							"    ",
+							"    pm.test(\"Estado cambió a ENVIADA\", function () {",
+							"        pm.expect(jsonData.notificacion.estado).to.eql(\"ENVIADA\");",
+							"    });",
+							"    ",
+							"    pm.test(\"Tiene fecha de envío\", function () {",
+							"        pm.expect(jsonData.notificacion.fechaEnvio).to.not.be.null;",
+							"    });",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/api/notificaciones/{{notificacion_id}}/enviar",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"notificaciones",
+						"{{notificacion_id}}",
+						"enviar"
+					]
+				},
+				"description": "Envía una notificación previamente creada. Valida el destinatario según las reglas del canal y cambia el estado a ENVIADA o FALLIDA."
+			},
+			"response": []
+		},
+		{
+			"name": "6. Obtener Notificación por ID",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"if (pm.response.code === 200) {",
+							"    var jsonData = pm.response.json();",
+							"    ",
+							"    pm.test(\"Status code is 200\", function () {",
+							"        pm.response.to.have.status(200);",
+							"    });",
+							"    ",
+							"    pm.test(\"Response tiene todos los campos\", function () {",
+							"        pm.expect(jsonData).to.have.property('id');",
+							"        pm.expect(jsonData).to.have.property('destinatario');",
+							"        pm.expect(jsonData).to.have.property('mensaje');",
+							"        pm.expect(jsonData).to.have.property('canal');",
+							"        pm.expect(jsonData).to.have.property('prioridad');",
+							"        pm.expect(jsonData).to.have.property('estado');",
+							"        pm.expect(jsonData).to.have.property('costo');",
+							"    });",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/api/notificaciones/{{notificacion_id}}",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"notificaciones",
+						"{{notificacion_id}}"
+					]
+				},
+				"description": "Obtiene los detalles completos de una notificación específica por su ID."
+			},
+			"response": []
+		},
+		{
+			"name": "7. Filtrar por Estado - PENDIENTE",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"if (pm.response.code === 200) {",
+							"    var jsonData = pm.response.json();",
+							"    ",
+							"    pm.test(\"Status code is 200\", function () {",
+							"        pm.response.to.have.status(200);",
+							"    });",
+							"    ",
+							"    pm.test(\"Response es un array\", function () {",
+							"        pm.expect(jsonData).to.be.an('array');",
+							"    });",
+							"    ",
+							"    if (jsonData.length > 0) {",
+							"        pm.test(\"Todas las notificaciones están PENDIENTES\", function () {",
+							"            jsonData.forEach(function(notif) {",
+							"                pm.expect(notif.estado).to.eql(\"PENDIENTE\");",
+							"            });",
+							"        });",
+							"    }",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/api/notificaciones/estado/PENDIENTE",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"notificaciones",
+						"estado",
+						"PENDIENTE"
+					]
+				},
+				"description": "Obtiene todas las notificaciones que están en estado PENDIENTE."
+			},
+			"response": []
+		},
+		{
+			"name": "8. Filtrar por Estado - ENVIADA",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"if (pm.response.code === 200) {",
+							"    var jsonData = pm.response.json();",
+							"    ",
+							"    pm.test(\"Status code is 200\", function () {",
+							"        pm.response.to.have.status(200);",
+							"    });",
+							"    ",
+							"    if (jsonData.length > 0) {",
+							"        pm.test(\"Todas las notificaciones están ENVIADAS\", function () {",
+							"            jsonData.forEach(function(notif) {",
+							"                pm.expect(notif.estado).to.eql(\"ENVIADA\");",
+							"            });",
+							"        });",
+							"    }",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/api/notificaciones/estado/ENVIADA",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"notificaciones",
+						"estado",
+						"ENVIADA"
+					]
+				},
+				"description": "Obtiene todas las notificaciones que fueron enviadas exitosamente."
+			},
+			"response": []
+		},
+		{
+			"name": "9. Filtrar por Estado - FALLIDA",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/api/notificaciones/estado/FALLIDA",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"notificaciones",
+						"estado",
+						"FALLIDA"
+					]
+				},
+				"description": "Obtiene todas las notificaciones que fallaron al enviarse (validación incorrecta)."
+			},
+			"response": []
+		},
+		{
+			"name": "10. Calcular Costo Total",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"if (pm.response.code === 200) {",
+							"    var jsonData = pm.response.json();",
+							"    ",
+							"    pm.test(\"Status code is 200\", function () {",
+							"        pm.response.to.have.status(200);",
+							"    });",
+							"    ",
+							"    pm.test(\"Response tiene costoTotal\", function () {",
+							"        pm.expect(jsonData).to.have.property('costoTotal');",
+							"    });",
+							"    ",
+							"    pm.test(\"Costo total es número\", function () {",
+							"        pm.expect(jsonData.costoTotal).to.be.a('number');",
+							"    });",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/api/notificaciones/costo-total",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"notificaciones",
+						"costo-total"
+					]
+				},
+				"description": "Calcula el costo total de todas las notificaciones creadas (suma de EMAIL $0.10 + SMS $0.50 + PUSH $0.05)."
+			},
+			"response": []
+		},
+		{
+			"name": "11. Error - Email sin @",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"destinatario\": \"clientebanco.com\",\n  \"mensaje\": \"Este email no tiene arroba\",\n  \"canal\": \"EMAIL\",\n  \"prioridad\": \"MEDIA\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/notificaciones",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"notificaciones"
+					]
+				},
+				"description": "Ejemplo de validación: Crea la notificación pero FALLARÁ al enviarla porque el email no contiene '@'."
+			},
+			"response": []
+		},
+		{
+			"name": "12. Error - SMS con menos de 10 dígitos",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"destinatario\": \"123456789\",\n  \"mensaje\": \"Teléfono inválido\",\n  \"canal\": \"SMS\",\n  \"prioridad\": \"ALTA\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/notificaciones",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"notificaciones"
+					]
+				},
+				"description": "Ejemplo de validación: Crea la notificación pero FALLARÁ al enviarla porque el teléfono no tiene 10 dígitos."
+			},
+			"response": []
+		},
+		{
+			"name": "13. Error - Push sin prefijo device_",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"destinatario\": \"abc123xyz\",\n  \"mensaje\": \"Device ID sin prefijo\",\n  \"canal\": \"PUSH\",\n  \"prioridad\": \"BAJA\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/notificaciones",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"notificaciones"
+					]
+				},
+				"description": "Ejemplo de validación: Crea la notificación pero FALLARÁ al enviarla porque el device ID no empieza con 'device_'."
+			},
+			"response": []
+		},
+		{
+			"name": "14. Error - Mensaje muy largo",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"destinatario\": \"test@banco.com\",\n  \"mensaje\": \"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\",\n  \"canal\": \"EMAIL\",\n  \"prioridad\": \"MEDIA\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/notificaciones",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"notificaciones"
+					]
+				},
+				"description": "Error de validación: Mensaje con más de 500 caracteres. Retorna 400 Bad Request."
+			},
+			"response": []
+		},
+		{
+			"name": "15. Error - Destinatario vacío",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"destinatario\": \"\",\n  \"mensaje\": \"Destinatario vacío\",\n  \"canal\": \"EMAIL\",\n  \"prioridad\": \"MEDIA\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/notificaciones",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"notificaciones"
+					]
+				},
+				"description": "Error de validación: Destinatario vacío. Retorna 400 Bad Request."
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080",
+			"type": "string"
+		}
+	]
+}
