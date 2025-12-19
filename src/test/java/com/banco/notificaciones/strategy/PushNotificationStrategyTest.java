@@ -93,9 +93,9 @@ class PushNotificationStrategyTest {
     @DisplayName("Estrategia de Push - Verifica nombre del canal")
     void testGetNombreCanal() {
         // When
-        String nombreCanal = strategy.getNombreCanal();
+        CanalNotificacion canal = strategy.getNombreCanal();
         
         // Then
-        assertEquals("PUSH", nombreCanal);
+        assertEquals(CanalNotificacion.PUSH, canal);
     }
 }

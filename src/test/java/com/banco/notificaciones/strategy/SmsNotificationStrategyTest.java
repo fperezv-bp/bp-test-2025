@@ -93,9 +93,9 @@ class SmsNotificationStrategyTest {
     @DisplayName("Estrategia de SMS - Verifica nombre del canal")
     void testGetNombreCanal() {
         // When
-        String nombreCanal = strategy.getNombreCanal();
+        CanalNotificacion canal = strategy.getNombreCanal();
         
         // Then
-        assertEquals("SMS", nombreCanal);
+        assertEquals(CanalNotificacion.SMS, canal);
     }
 }

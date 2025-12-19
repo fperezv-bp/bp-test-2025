@@ -76,9 +76,9 @@ class EmailNotificationStrategyTest {
     @DisplayName("Estrategia de Email - Verifica nombre del canal")
     void testGetNombreCanal() {
         // When
-        String nombreCanal = strategy.getNombreCanal();
+        CanalNotificacion canal = strategy.getNombreCanal();
         
         // Then
-        assertEquals("EMAIL", nombreCanal);
+        assertEquals(CanalNotificacion.EMAIL, canal);
     }
 }

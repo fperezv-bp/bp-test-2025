@@ -1,6 +1,7 @@
 package com.banco.notificaciones.strategy;
 
 import com.banco.notificaciones.model.Notificacion;
+import com.banco.notificaciones.model.enums.CanalNotificacion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,7 +13,6 @@ import java.math.BigDecimal;
 public class PushNotificationStrategy implements CanalNotificacionStrategy {
     
     private static final Logger logger = LoggerFactory.getLogger(PushNotificationStrategy.class);
-    private static final String NOMBRE_CANAL = "PUSH";
     private static final String PREFIJO_DEVICE = "device_";
     
     @Value("${notificaciones.canal.push.costo}")
@@ -38,8 +38,8 @@ public class PushNotificationStrategy implements CanalNotificacionStrategy {
     }
     
     @Override
-    public String getNombreCanal() {
-        return NOMBRE_CANAL;
+    public CanalNotificacion getNombreCanal() {
+        return CanalNotificacion.PUSH;
     }
     
     private boolean validarDeviceId(String deviceId) {

@@ -1,6 +1,7 @@
 package com.banco.notificaciones.strategy;
 
 import com.banco.notificaciones.model.Notificacion;
+import com.banco.notificaciones.model.enums.CanalNotificacion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,7 +13,6 @@ import java.math.BigDecimal;
 public class SmsNotificationStrategy implements CanalNotificacionStrategy {
     
     private static final Logger logger = LoggerFactory.getLogger(SmsNotificationStrategy.class);
-    private static final String NOMBRE_CANAL = "SMS";
     
     @Value("${notificaciones.canal.sms.costo}")
     private BigDecimal costo;
@@ -37,8 +37,8 @@ public class SmsNotificationStrategy implements CanalNotificacionStrategy {
     }
     
     @Override
-    public String getNombreCanal() {
-        return NOMBRE_CANAL;
+    public CanalNotificacion getNombreCanal() {
+        return CanalNotificacion.SMS;
     }
     
     private boolean validarTelefono(String telefono) {

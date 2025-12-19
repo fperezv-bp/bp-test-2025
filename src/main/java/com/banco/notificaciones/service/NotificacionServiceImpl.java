@@ -1,6 +1,10 @@
 package com.banco.notificaciones.service;
 
+import com.banco.notificaciones.dto.CostoTotalResponse;
+import com.banco.notificaciones.dto.EnvioResponse;
+import com.banco.notificaciones.dto.NotificacionResponse;
 import com.banco.notificaciones.factory.NotificacionStrategyFactory;
+import com.banco.notificaciones.mapper.NotificacionMapper;
 import com.banco.notificaciones.model.Notificacion;
 import com.banco.notificaciones.model.enums.CanalNotificacion;
 import com.banco.notificaciones.model.enums.Estado;
@@ -16,6 +20,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * Aplica principios SOLID:
@@ -32,9 +37,10 @@ public class NotificacionServiceImpl implements NotificacionService {
     
     private final NotificacionRepository repository;
     private final NotificacionStrategyFactory strategyFactory;
+    private final NotificacionMapper mapper;
     
     @Override
-    public Notificacion crearNotificacion(String destinatario, String mensaje, 
+    public NotificacionResponse crearNotificacion(String destinatario, String mensaje, 
                                          CanalNotificacion canal, Prioridad prioridad) {
         logger.debug("Creando notificación para destinatario: {}", destinatario);
         
@@ -58,18 +64,21 @@ public class NotificacionServiceImpl implements NotificacionService {
         repository.guardar(notificacion);
         
         logger.info("Notificación creada exitosamente con ID: {}", notificacion.getId());
-        return notificacion;
+        return mapper.toResponse(notificacion);
     }
     
     @Override
-    public boolean enviarNotificacion(String id) {
+    public EnvioResponse enviarNotificacion(String id) {
         logger.debug("Enviando notificación con ID: {}", id);
         
-        Notificacion notificacion = obtenerPorId(id);
+        Notificacion notificacion = buscarPorId(id);
         
         if (notificacion.getEstado() == Estado.ENVIADA) {
             logger.warn("La notificación {} ya fue enviada", id);
-            return true;
+            return EnvioResponse.builder()
+                    .exitoso(true)
+                    .notificacion(mapper.toResponse(notificacion))
+                    .build();
         }
         
         CanalNotificacionStrategy strategy = strategyFactory.getStrategy(notificacion.getCanal());
@@ -86,31 +95,47 @@ public class NotificacionServiceImpl implements NotificacionService {
         }
         
         repository.guardar(notificacion);
-        return exitoso;
+        
+        return EnvioResponse.builder()
+                .exitoso(exitoso)
+                .notificacion(mapper.toResponse(notificacion))
+                .build();
     }
     
     @Override
-    public Notificacion obtenerPorId(String id) {
+    public NotificacionResponse obtenerPorId(String id) {
+        Notificacion notificacion = buscarPorId(id);
+        return mapper.toResponse(notificacion);
+    }
+    
+    private Notificacion buscarPorId(String id) {
         return repository.buscarPorId(id)
                 .orElseThrow(() -> new IllegalArgumentException(
                         "No existe una notificación con ID: " + id));
     }
     
     @Override
-    public List<Notificacion> obtenerPorEstado(Estado estado) {
+    public List<NotificacionResponse> obtenerPorEstado(Estado estado) {
         if (estado == null) {
             throw new IllegalArgumentException("El estado no puede ser nulo");
         }
-        return repository.filtrarPorEstado(estado);
+        return repository.filtrarPorEstado(estado)
+                .stream()
+                .map(mapper::toResponse)
+                .collect(Collectors.toList());
     }
     
     @Override
-    public BigDecimal calcularCostoTotal() {
+    public CostoTotalResponse calcularCostoTotal() {
         List<Notificacion> notificaciones = repository.listarTodas();
         
-        return notificaciones.stream()
+        BigDecimal costoTotal = notificaciones.stream()
                 .map(Notificacion::getCosto)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+        
+        return CostoTotalResponse.builder()
+                .costoTotal(costoTotal)
+                .build();
     }
     
     /**

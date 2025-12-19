@@ -1,6 +1,10 @@
 package com.banco.notificaciones.service;
 
+import com.banco.notificaciones.dto.CostoTotalResponse;
+import com.banco.notificaciones.dto.EnvioResponse;
+import com.banco.notificaciones.dto.NotificacionResponse;
 import com.banco.notificaciones.factory.NotificacionStrategyFactory;
+import com.banco.notificaciones.mapper.NotificacionMapper;
 import com.banco.notificaciones.model.Notificacion;
 import com.banco.notificaciones.model.enums.CanalNotificacion;
 import com.banco.notificaciones.model.enums.Estado;
@@ -46,6 +50,9 @@ class NotificacionServiceImplTest {
     @Mock
     private CanalNotificacionStrategy emailStrategy;
     
+    @Mock
+    private NotificacionMapper mapper;
+    
     @InjectMocks
     private NotificacionServiceImpl notificacionService;
     
@@ -67,8 +74,24 @@ class NotificacionServiceImplTest {
         when(strategyFactory.getStrategy(canal)).thenReturn(emailStrategy);
         when(repository.guardar(any(Notificacion.class))).thenAnswer(i -> i.getArgument(0));
         
+        // Mock mapper to return DTO
+        when(mapper.toResponse(any(Notificacion.class))).thenAnswer(invocation -> {
+            Notificacion notif = invocation.getArgument(0);
+            return NotificacionResponse.builder()
+                    .id(notif.getId())
+                    .destinatario(notif.getDestinatario())
+                    .mensaje(notif.getMensaje())
+                    .canal(notif.getCanal())
+                    .prioridad(notif.getPrioridad())
+                    .estado(notif.getEstado())
+                    .costo(notif.getCosto())
+                    .fechaCreacion(notif.getFechaCreacion())
+                    .fechaEnvio(notif.getFechaEnvio())
+                    .build();
+        });
+        
         // When
-        Notificacion resultado = notificacionService.crearNotificacion(
+        NotificacionResponse resultado = notificacionService.crearNotificacion(
                 destinatario, mensaje, canal, prioridad);
         
         // Then
@@ -86,6 +109,7 @@ class NotificacionServiceImplTest {
         // Verificar que se guardó en el repositorio
         verify(repository, times(1)).guardar(any(Notificacion.class));
         verify(strategyFactory, times(1)).getStrategy(canal);
+        verify(mapper, times(1)).toResponse(any(Notificacion.class));
     }
     
     @Test
@@ -166,14 +190,32 @@ class NotificacionServiceImplTest {
         when(repository.buscarPorId(id)).thenReturn(Optional.of(notificacion));
         when(strategyFactory.getStrategy(CanalNotificacion.EMAIL)).thenReturn(emailStrategy);
         when(emailStrategy.enviar(notificacion)).thenReturn(true);
-        when(emailStrategy.getNombreCanal()).thenReturn("EMAIL");
+        when(emailStrategy.getNombreCanal()).thenReturn(CanalNotificacion.EMAIL);
         when(repository.guardar(any(Notificacion.class))).thenAnswer(i -> i.getArgument(0));
         
+        // Mock mapper to return DTO
+        when(mapper.toResponse(any(Notificacion.class))).thenAnswer(invocation -> {
+            Notificacion notif = invocation.getArgument(0);
+            return NotificacionResponse.builder()
+                    .id(notif.getId())
+                    .destinatario(notif.getDestinatario())
+                    .mensaje(notif.getMensaje())
+                    .canal(notif.getCanal())
+                    .prioridad(notif.getPrioridad())
+                    .estado(notif.getEstado())
+                    .costo(notif.getCosto())
+                    .fechaCreacion(notif.getFechaCreacion())
+                    .fechaEnvio(notif.getFechaEnvio())
+                    .build();
+        });
+        
         // When
-        boolean resultado = notificacionService.enviarNotificacion(id);
+        EnvioResponse resultado = notificacionService.enviarNotificacion(id);
         
         // Then
-        assertTrue(resultado);
+        assertNotNull(resultado);
+        assertTrue(resultado.getExitoso());
+        assertNotNull(resultado.getNotificacion());
         
         // Capturar la notificación guardada
         ArgumentCaptor<Notificacion> captor = ArgumentCaptor.forClass(Notificacion.class);
@@ -183,7 +225,12 @@ class NotificacionServiceImplTest {
         assertEquals(Estado.ENVIADA, notificacionGuardada.getEstado());
         assertNotNull(notificacionGuardada.getFechaEnvio()); // Timestamp registrado
         
+        // Verificar DTO retornado
+        assertEquals(Estado.ENVIADA, resultado.getNotificacion().getEstado());
+        assertNotNull(resultado.getNotificacion().getFechaEnvio());
+        
         verify(emailStrategy, times(1)).enviar(notificacion);
+        verify(mapper, times(1)).toResponse(any(Notificacion.class));
     }
     
     @Test
@@ -208,10 +255,11 @@ class NotificacionServiceImplTest {
         when(repository.listarTodas()).thenReturn(Arrays.asList(notif1, notif2, notif3));
         
         // When
-        BigDecimal costoTotal = notificacionService.calcularCostoTotal();
+        CostoTotalResponse resultado = notificacionService.calcularCostoTotal();
         
         // Then
-        assertEquals(new BigDecimal("0.65"), costoTotal);
+        assertNotNull(resultado);
+        assertEquals(new BigDecimal("0.65"), resultado.getCostoTotal());
         verify(repository, times(1)).listarTodas();
     }
     
@@ -231,10 +279,11 @@ class NotificacionServiceImplTest {
         when(repository.listarTodas()).thenReturn(notificaciones);
         
         // When
-        BigDecimal costoTotal = notificacionService.calcularCostoTotal();
+        CostoTotalResponse resultado = notificacionService.calcularCostoTotal();
         
         // Then
-        assertEquals(0, new BigDecimal("0.65").compareTo(costoTotal));
+        assertNotNull(resultado);
+        assertEquals(0, new BigDecimal("0.65").compareTo(resultado.getCostoTotal()));
     }
     
     @Test
@@ -254,13 +303,23 @@ class NotificacionServiceImplTest {
         when(repository.filtrarPorEstado(Estado.PENDIENTE))
                 .thenReturn(Arrays.asList(notif1, notif2));
         
+        // Mock mapper to return DTOs
+        when(mapper.toResponse(any(Notificacion.class))).thenAnswer(invocation -> {
+            Notificacion notif = invocation.getArgument(0);
+            return NotificacionResponse.builder()
+                    .id(notif.getId())
+                    .estado(notif.getEstado())
+                    .build();
+        });
+        
         // When
-        List<Notificacion> resultado = notificacionService.obtenerPorEstado(Estado.PENDIENTE);
+        List<NotificacionResponse> resultado = notificacionService.obtenerPorEstado(Estado.PENDIENTE);
         
         // Then
         assertEquals(2, resultado.size());
         assertTrue(resultado.stream().allMatch(n -> n.getEstado() == Estado.PENDIENTE));
         verify(repository, times(1)).filtrarPorEstado(Estado.PENDIENTE);
+        verify(mapper, times(2)).toResponse(any(Notificacion.class));
     }
     
     @Test
@@ -270,7 +329,7 @@ class NotificacionServiceImplTest {
         when(repository.filtrarPorEstado(Estado.FALLIDA)).thenReturn(List.of());
         
         // When
-        List<Notificacion> resultado = notificacionService.obtenerPorEstado(Estado.FALLIDA);
+        List<NotificacionResponse> resultado = notificacionService.obtenerPorEstado(Estado.FALLIDA);
         
         // Then
         assertNotNull(resultado);
@@ -286,14 +345,24 @@ class NotificacionServiceImplTest {
         when(strategyFactory.getStrategy(CanalNotificacion.EMAIL)).thenReturn(emailStrategy);
         when(repository.guardar(any(Notificacion.class))).thenAnswer(i -> i.getArgument(0));
         
+        // Mock mapper to return DTO
+        when(mapper.toResponse(any(Notificacion.class))).thenAnswer(invocation -> {
+            Notificacion notif = invocation.getArgument(0);
+            return NotificacionResponse.builder()
+                    .id(notif.getId())
+                    .costo(notif.getCosto())
+                    .build();
+        });
+        
         // When
-        Notificacion notificacion = notificacionService.crearNotificacion(
+        NotificacionResponse notificacion = notificacionService.crearNotificacion(
                 "test@banco.com", "Mensaje", CanalNotificacion.EMAIL, Prioridad.ALTA);
         
         // Then
         assertNotNull(notificacion);
         assertEquals(new BigDecimal("0.10"), notificacion.getCosto());
         verify(strategyFactory, times(1)).getStrategy(CanalNotificacion.EMAIL);
+        verify(mapper, times(1)).toResponse(any(Notificacion.class));
     }
     
     @Test
@@ -305,14 +374,24 @@ class NotificacionServiceImplTest {
         when(strategyFactory.getStrategy(CanalNotificacion.SMS)).thenReturn(smsStrategy);
         when(repository.guardar(any(Notificacion.class))).thenAnswer(i -> i.getArgument(0));
         
+        // Mock mapper to return DTO
+        when(mapper.toResponse(any(Notificacion.class))).thenAnswer(invocation -> {
+            Notificacion notif = invocation.getArgument(0);
+            return NotificacionResponse.builder()
+                    .id(notif.getId())
+                    .costo(notif.getCosto())
+                    .build();
+        });
+        
         // When
-        Notificacion notificacion = notificacionService.crearNotificacion(
+        NotificacionResponse notificacion = notificacionService.crearNotificacion(
                 "5512345678", "Código: 123456", CanalNotificacion.SMS, Prioridad.ALTA);
         
         // Then
         assertNotNull(notificacion);
         assertEquals(new BigDecimal("0.50"), notificacion.getCosto());
         verify(strategyFactory, times(1)).getStrategy(CanalNotificacion.SMS);
+        verify(mapper, times(1)).toResponse(any(Notificacion.class));
     }
     
     @Test
@@ -333,16 +412,32 @@ class NotificacionServiceImplTest {
         when(emailStrategy.enviar(notificacion)).thenReturn(false);
         when(repository.guardar(any(Notificacion.class))).thenAnswer(i -> i.getArgument(0));
         
+        // Mock mapper to return DTO
+        when(mapper.toResponse(any(Notificacion.class))).thenAnswer(invocation -> {
+            Notificacion notif = invocation.getArgument(0);
+            return NotificacionResponse.builder()
+                    .id(notif.getId())
+                    .destinatario(notif.getDestinatario())
+                    .mensaje(notif.getMensaje())
+                    .canal(notif.getCanal())
+                    .estado(notif.getEstado())
+                    .build();
+        });
+        
         // When
-        boolean resultado = notificacionService.enviarNotificacion(id);
+        EnvioResponse resultado = notificacionService.enviarNotificacion(id);
         
         // Then
-        assertFalse(resultado);
+        assertNotNull(resultado);
+        assertFalse(resultado.getExitoso());
+        assertNotNull(resultado.getNotificacion());
         
         ArgumentCaptor<Notificacion> captor = ArgumentCaptor.forClass(Notificacion.class);
         verify(repository).guardar(captor.capture());
         
         assertEquals(Estado.FALLIDA, captor.getValue().getEstado());
+        assertEquals(Estado.FALLIDA, resultado.getNotificacion().getEstado());
+        verify(mapper, times(1)).toResponse(any(Notificacion.class));
     }
     
     @Test
@@ -359,5 +454,6 @@ class NotificacionServiceImplTest {
         );
         
         assertTrue(exception.getMessage().contains("No existe una notificación con ID"));
+        verify(mapper, never()).toResponse(any(Notificacion.class));
     }
 }

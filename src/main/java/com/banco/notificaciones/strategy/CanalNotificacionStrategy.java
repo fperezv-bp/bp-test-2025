@@ -1,6 +1,7 @@
 package com.banco.notificaciones.strategy;
 
 import com.banco.notificaciones.model.Notificacion;
+import com.banco.notificaciones.model.enums.CanalNotificacion;
 
 import java.math.BigDecimal;
 
@@ -14,5 +15,5 @@ public interface CanalNotificacionStrategy {
     
     BigDecimal calcularCosto();
     
-    String getNombreCanal();
+    CanalNotificacion getNombreCanal();
 }
