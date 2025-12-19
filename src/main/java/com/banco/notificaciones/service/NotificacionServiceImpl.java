@@ -7,6 +7,7 @@ import com.banco.notificaciones.model.enums.Estado;
 import com.banco.notificaciones.model.enums.Prioridad;
 import com.banco.notificaciones.repository.NotificacionRepository;
 import com.banco.notificaciones.strategy.CanalNotificacionStrategy;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -17,13 +18,13 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Implementación del servicio de notificaciones.
- * Aplica los principios SOLID:
+ * Aplica principios SOLID:
  * - SRP: Solo gestiona lógica de notificaciones
  * - OCP: Extensible a nuevos canales sin modificar código base
  * - DIP: Depende de abstracciones (Strategy, Repository)
  */
 @Service
+@RequiredArgsConstructor
 public class NotificacionServiceImpl implements NotificacionService {
     
     private static final Logger logger = LoggerFactory.getLogger(NotificacionServiceImpl.class);
@@ -32,26 +33,17 @@ public class NotificacionServiceImpl implements NotificacionService {
     private final NotificacionRepository repository;
     private final NotificacionStrategyFactory strategyFactory;
     
-    public NotificacionServiceImpl(NotificacionRepository repository, 
-                                  NotificacionStrategyFactory strategyFactory) {
-        this.repository = repository;
-        this.strategyFactory = strategyFactory;
-    }
-    
     @Override
     public Notificacion crearNotificacion(String destinatario, String mensaje, 
                                          CanalNotificacion canal, Prioridad prioridad) {
         logger.debug("Creando notificación para destinatario: {}", destinatario);
         
-        // Validaciones DRY
         validarDestinatario(destinatario);
         validarMensaje(mensaje);
         
-        // Obtener estrategia y calcular costo
         CanalNotificacionStrategy strategy = strategyFactory.getStrategy(canal);
         BigDecimal costo = strategy.calcularCosto();
         
-        // Construir notificación
         Notificacion notificacion = Notificacion.builder()
                 .id(generarId())
                 .destinatario(destinatario)
@@ -63,7 +55,6 @@ public class NotificacionServiceImpl implements NotificacionService {
                 .fechaCreacion(LocalDateTime.now())
                 .build();
         
-        // Persistir
         repository.guardar(notificacion);
         
         logger.info("Notificación creada exitosamente con ID: {}", notificacion.getId());
@@ -81,10 +72,8 @@ public class NotificacionServiceImpl implements NotificacionService {
             return true;
         }
         
-        // Obtener estrategia correspondiente
         CanalNotificacionStrategy strategy = strategyFactory.getStrategy(notificacion.getCanal());
         
-        // Intentar enviar
         boolean exitoso = strategy.enviar(notificacion);
         
         if (exitoso) {
@@ -124,14 +113,8 @@ public class NotificacionServiceImpl implements NotificacionService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
     
-    // ========== MÉTODOS PRIVADOS PARA VALIDACIONES DRY ==========
-    
     /**
-     * Valida que el destinatario no sea nulo ni vacío.
      * Principio DRY: Método reutilizable para validación de destinatario.
-     * 
-     * @param destinatario El destinatario a validar
-     * @throws IllegalArgumentException si el destinatario es inválido
      */
     private void validarDestinatario(String destinatario) {
         if (destinatario == null || destinatario.trim().isEmpty()) {
@@ -140,11 +123,7 @@ public class NotificacionServiceImpl implements NotificacionService {
     }
     
     /**
-     * Valida que el mensaje no sea nulo, vacío, ni exceda el límite de caracteres.
      * Principio DRY: Método reutilizable para validación de mensaje.
-     * 
-     * @param mensaje El mensaje a validar
-     * @throws IllegalArgumentException si el mensaje es inválido
      */
     private void validarMensaje(String mensaje) {
         if (mensaje == null || mensaje.trim().isEmpty()) {
@@ -157,10 +136,7 @@ public class NotificacionServiceImpl implements NotificacionService {
     }
     
     /**
-     * Genera un identificador único usando UUID.
      * Principio DRY: Método reutilizable para generación de IDs.
-     * 
-     * @return Un identificador único en formato String
      */
     private String generarId() {
         return UUID.randomUUID().toString();

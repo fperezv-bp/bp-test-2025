@@ -5,6 +5,7 @@ import com.banco.notificaciones.model.enums.CanalNotificacion;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
 
@@ -22,6 +23,7 @@ class SmsNotificationStrategyTest {
     @BeforeEach
     void setUp() {
         strategy = new SmsNotificationStrategy();
+        ReflectionTestUtils.setField(strategy, "costo", new BigDecimal("0.50"));
     }
     
     @Test

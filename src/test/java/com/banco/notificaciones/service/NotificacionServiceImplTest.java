@@ -17,6 +17,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -280,8 +281,9 @@ class NotificacionServiceImplTest {
     @DisplayName("Test 7: Factory genera estrategia correcta - Verifica creación de EmailStrategy")
     void testFactoryGeneraEstrategiaEmailCorrecta() {
         // Given
-        EmailNotificationStrategy realEmailStrategy = new EmailNotificationStrategy();
-        when(strategyFactory.getStrategy(CanalNotificacion.EMAIL)).thenReturn(realEmailStrategy);
+        EmailNotificationStrategy emailStrategy = new EmailNotificationStrategy();
+        ReflectionTestUtils.setField(emailStrategy, "costo", new BigDecimal("0.10"));
+        when(strategyFactory.getStrategy(CanalNotificacion.EMAIL)).thenReturn(emailStrategy);
         when(repository.guardar(any(Notificacion.class))).thenAnswer(i -> i.getArgument(0));
         
         // When
@@ -299,6 +301,7 @@ class NotificacionServiceImplTest {
     void testFactoryGeneraEstrategiaSmsCorrecta() {
         // Given
         SmsNotificationStrategy smsStrategy = new SmsNotificationStrategy();
+        ReflectionTestUtils.setField(smsStrategy, "costo", new BigDecimal("0.50"));
         when(strategyFactory.getStrategy(CanalNotificacion.SMS)).thenReturn(smsStrategy);
         when(repository.guardar(any(Notificacion.class))).thenAnswer(i -> i.getArgument(0));
         

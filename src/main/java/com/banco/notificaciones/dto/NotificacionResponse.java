@@ -11,9 +11,6 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-/**
- * DTO de respuesta para notificaciones.
- */
 @Data
 @Builder
 @NoArgsConstructor
